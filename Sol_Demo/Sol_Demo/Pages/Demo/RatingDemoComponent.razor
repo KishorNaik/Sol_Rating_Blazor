@@ -1,0 +1,70 @@
+﻿
+@if (IsLoad == false)
+{
+    <span>Loading...</span>
+}
+else
+{
+
+    <div class="container">
+        <div class="row">
+            <div class="col-6">
+
+                @*if u dont want to generate server side on changed rating method then you can use two way binding SelectedRating Property*@
+
+                @*<RatingComponent Rating="Rating"
+                         Max="Max"
+                         @bind-SelectedRating="Rating"
+                         >
+
+                    </RatingComponent>*@
+
+                <RatingComponent Rating="Rating"
+                                 Max="Max"
+                                 SelectedRatingChanged="OnChangedRating"
+                                 >
+
+                </RatingComponent>
+            </div>
+            <div class="col-6">
+                @if (Rating >= 1)
+                {
+                    <span>Rating Value is : @Rating</span>
+                    <br />
+                    <span>Server Side Generate Rating Value is : @Rating</span>
+                }
+            </div>
+        </div>
+    </div>
+}
+
+
+
+@code {
+
+    private bool IsLoad { get; set; }
+
+    private int Rating { get; set; }
+
+    private int Max { get; set; }
+
+
+    private void OnChangedRating(int value)
+    {
+        Rating = value;
+        StateHasChanged();
+    }
+
+    protected override void OnAfterRender(bool firstRender)
+    {
+        if (firstRender)
+        {
+            IsLoad = true;
+
+            Rating = 0;
+            Max = 5;
+
+            StateHasChanged();
+        }
+    }
+}

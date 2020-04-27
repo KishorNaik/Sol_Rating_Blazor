@@ -1,0 +1,98 @@
+﻿@inject IJSRuntime jsRuntime
+
+<div class="starrr" @ref="RatingElement">
+</div>
+
+@code {
+
+    #region Public Property
+    [Parameter]
+    public int Rating { get; set; }
+
+    [Parameter]
+    public int Max { get; set; }
+
+    [Parameter]
+    public int SelectedRating { get; set; }
+
+    [Parameter]
+    public EventCallback<int> SelectedRatingChanged { get; set; }
+
+    //[Parameter] //Same work like EventCallBack
+    //public Action<int> OnChangedRatingServerSide { get; set; }
+
+    #endregion
+
+    #region Private Propety
+    private ElementReference RatingElement { get; set; }
+    #endregion
+
+    #region Private Static Property
+
+    private static Action<String> ActionGetSelectedRatingValue { get; set; }
+
+    #endregion
+
+    #region Private Method
+    private Task<String> BindRatingJsonDataAsync()
+    {
+        var data = JsonConvert.SerializeObject( new { rating=Rating,max=Max });
+        return Task.FromResult<String>(data);
+    }
+
+    private Task BindSelectedRatingDataAsync()
+    {
+        ActionGetSelectedRatingValue = (itemValue) =>
+        {
+            InvokeAsync(async () => {
+
+                SelectedRating = Convert.ToInt32(itemValue);
+
+                // Invoke Server Side method with Changed Selected Rating
+                await SelectedRatingChanged.InvokeAsync(Convert.ToInt32(itemValue));
+
+                // Invoke Server Side Method
+                //OnChangedRatingServerSide(SelectedRating);
+
+                StateHasChanged();
+            });
+        };
+
+        return Task.CompletedTask;
+    }
+    #endregion
+
+    #region Static Method
+    [JSInvokable]
+    public static Task OnSelectedRatingJS(string item)
+    {
+        ActionGetSelectedRatingValue(item);
+
+        return Task.CompletedTask;
+    }
+    #endregion
+
+
+
+    #region Protected Method
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // get Rating Data from Public Property and convert into Json
+            var ratingJsonData = await this.BindRatingJsonDataAsync();
+
+            // Call RatingBlazor Js
+            await RatingElement.RatingBlazorJsAsync(jsRuntime, ratingJsonData);
+
+            // On Rating Chaged 
+            await BindSelectedRatingDataAsync();
+
+            StateHasChanged();
+        }
+
+        //return base.OnAfterRenderAsync(firstRender);
+    }
+    #endregion
+
+}
